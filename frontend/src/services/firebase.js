@@ -1,10 +1,13 @@
-// firebase.js
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-import { getStorage } from "firebase/storage";
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
+import { 
+  getAuth, 
+  connectAuthEmulator,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut
+} from "firebase/auth";
 
-// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyClMgxltRfjU_hvT9C1H3Reaqf2TQRwT88",
   authDomain: "influencer-platform-60b03.firebaseapp.com",
@@ -15,36 +18,46 @@ const firebaseConfig = {
   measurementId: "G-94GNEV7RPN"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Firestore, Auth, and Storage instances
-const db = getFirestore(app);
 const auth = getAuth(app);
-const storage = getStorage(app);
+const db = getFirestore(app);
 
-// Export the instances
-export { db, auth, storage };
-// SomeComponent.js (or wherever you want to use the Firebase auth functions)
-import { auth } from './firebase'; // Import the initialized auth instance
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+// Connect to emulators in development
+if (process.env.NODE_ENV === 'development') {
+  connectAuthEmulator(auth, 'http://localhost:9099');
+  connectFirestoreEmulator(db, 'localhost', 8080);
+}
 
-// Function to create a new user
-async function createUser(email, password) {
+// Authentication functions
+const signUpUser = async (email, password) => {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    console.log('User created: ', userCredential.user);
+    return userCredential.user;
   } catch (error) {
-    console.error(error.message);
+    throw error;
   }
-}
+};
 
-// Function to sign in an existing user
-async function signInUser(email, password) {
+const signInUser = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    console.log('User signed in: ', userCredential.user);
+    return userCredential.user;
   } catch (error) {
-    console.error(error.message);
+    throw error;
   }
-}
+};
+
+const signOutUser = async () => {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export { 
+  auth, 
+  signUpUser, 
+  signInUser, 
+  signOutUser 
+};
